@@ -283,10 +283,6 @@ async function connectToMongoDB() {
                     return res.status(400).json({ error: 'Email and password are required' });
                 }
 
-                await client.connect();
-                const db = client.db('premier');
-                const usersCollection = db.collection('Users');
-
                 const user = await usersCollection.findOne({ email, password });
 
                 if (!user) {
