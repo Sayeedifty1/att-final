@@ -155,31 +155,31 @@ async function connectToMongoDB() {
         app.post('/student-att-data', async (req, res) => {
             try {
                 console.log('Received request body:', req.body);
-        
+
                 const studentAttendanceData = req.body;
-        
+
                 if (!Array.isArray(studentAttendanceData) || studentAttendanceData.length === 0) {
                     return res.status(400).json({ error: 'Invalid or empty student attendance data provided' });
                 }
-        
+
                 const courseName = studentAttendanceData[0].courseName;
-        
+
                 // Input validation: Ensure each object has necessary properties
                 const isValidData = studentAttendanceData.every(item => (
                     item.courseName === courseName && item.name && item.id && /* Add other required properties */
                     typeof item.name === 'string' && typeof item.id === 'string' /* Add other type checks */
                 ));
-        
+
                 if (!isValidData) {
                     return res.status(400).json({ error: 'Invalid student attendance data format' });
                 }
-        
+
                 // Delete existing data for the course
                 await studentInfoCollection.deleteMany({ courseName });
-        
+
                 // Insert new data
                 const result = await studentInfoCollection.insertMany(studentAttendanceData);
-        
+
                 if (result.acknowledged) {
                     res.status(201).json({ message: 'Student attendance data successfully posted' });
                 } else {
@@ -190,8 +190,8 @@ async function connectToMongoDB() {
                 res.status(500).json({ error: 'Failed to process student attendance data' });
             }
         });
-        
-        
+
+
 
         // get student attendance data from studentInfoCollection by id
         app.get('/get-student-att-data/:id', async (req, res) => {
@@ -257,7 +257,7 @@ async function connectToMongoDB() {
                 const { name, email, mobile, courses } = req.body;
                 const result = await usersCollection.updateOne(
                     { _id: id },
-                    { $set: { name, email, mobile,courses } }
+                    { $set: { name, email, mobile, courses } }
                 );
 
                 if (result.modifiedCount > 0) {
@@ -296,8 +296,6 @@ async function connectToMongoDB() {
             } catch (error) {
                 console.error('Error authenticating user:', error);
                 res.status(500).json({ error: 'Internal Server Error' });
-            } finally {
-                await client.close();
             }
         });
 
