@@ -30,7 +30,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        client.connect((err => {
+        await client.connect((err => {
             if (err) {
                 console.log(err);
                 return;
@@ -373,7 +373,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Robazz server is running')
+    res.send('premier server is running')
 })
 
 app.listen(port, () => {
