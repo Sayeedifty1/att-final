@@ -394,7 +394,25 @@ async function connectToMongoDB() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+    // Fetch students by course name
+    app.post("/students-by-course", async (req, res) => {
+      try {
+        const { courseName } = req.body;
 
+        // Search for students with a matching course name in the usersCollection
+        const students = await usersCollection
+          .find({
+            category: "Student",
+            courses: { $in: [courseName] },
+          })
+          .toArray();
+
+        res.status(200).json(students);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
     // get details by fingerprint
     app.post("/search-user", async (req, res) => {
       try {
