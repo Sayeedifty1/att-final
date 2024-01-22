@@ -415,6 +415,26 @@ async function connectToMongoDB() {
         res.status(500).json({ error: "Internal Server Error" });
       }
     });
+    // Fetch register students finger print by course name
+    app.post("/students-by-course-fID", async (req, res) => {
+      try {
+        const { courseName } = req.body;
+
+        // Search for students with a matching course name in the usersCollection
+        const students = await usersCollection
+          .find({
+            category: "Student",
+            courses: { $in: [courseName] },
+          })
+          .toArray();
+        const fingerprints = students.map((student) => student.fingerprint);
+
+        res.status(200).json(fingerprints);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
     // get details by fingerprint
     app.post("/search-user", async (req, res) => {
       try {
