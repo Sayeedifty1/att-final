@@ -223,6 +223,8 @@ async function connectToMongoDB() {
 
         const studentAttendanceData = req.body;
 
+        const courseName = studentAttendanceData[0].courseName;
+
         if (
           !Array.isArray(studentAttendanceData) ||
           studentAttendanceData.length === 0
@@ -232,8 +234,11 @@ async function connectToMongoDB() {
           });
         }
 
-        const courseName = studentAttendanceData[0].courseName;
-
+        // Delete existing data for the course
+        const deleteResult = await studentInfoCollection.deleteMany({
+          courseName,
+        });
+        console.log(`${deleteResult.deletedCount} document(s) were deleted.`);
         // Input validation: Ensure each object has necessary properties
         const isValidData = studentAttendanceData.every(
           (item) =>
@@ -249,9 +254,6 @@ async function connectToMongoDB() {
             .status(400)
             .json({ error: "Invalid student attendance data format" });
         }
-
-        // Delete existing data for the course
-        await studentInfoCollection.deleteMany({ courseName });
 
         // Insert new data
         const result = await studentInfoCollection.insertMany(
