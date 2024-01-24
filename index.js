@@ -9,7 +9,12 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Replace with the origin of your frontend
+    credentials: true,
+  })
+);
 // MongoDB Connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nsyuaxc.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -215,7 +220,44 @@ async function connectToMongoDB() {
         res.status(500).json({ error: "Failed to post attendance data" });
       }
     });
+    // !! delete previous attendance data using course name
+    app.delete("/attendance/delete", async (req, res) => {
+      const { courseName } = req.body;
 
+      try {
+        const result = await studentInfoCollection.deleteMany({
+          courseName: courseName,
+        });
+
+        if (result.deletedCount > 0) {
+          res.json({ message: "Attendance data deleted successfully" });
+        } else {
+          res.status(404).json({ message: "No attendance data found" });
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    });
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    app.put("/attendance-student", async (req, res) => {
+      const attendanceInfo = req.body;
+
+      try {
+        // Delete all data with the same courseName
+        await studentInfoCollection.deleteMany({
+          courseName: attendanceInfo[0].courseName,
+        });
+
+        // Insert the new data
+        const result = await studentInfoCollection.insertMany(attendanceInfo);
+
+        res.json({ message: "Student info updated successfully" });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    });
     // Post student attendance data in studentInfoCollection
     app.post("/student-att-data", async (req, res) => {
       try {
@@ -235,10 +277,9 @@ async function connectToMongoDB() {
         }
 
         // Delete existing data for the course
-        const deleteResult = await studentInfoCollection.deleteMany({
+        await studentInfoCollection.deleteMany({
           courseName,
         });
-        console.log(`${deleteResult.deletedCount} document(s) were deleted.`);
         // Input validation: Ensure each object has necessary properties
         const isValidData = studentAttendanceData.every(
           (item) =>
