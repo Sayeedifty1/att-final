@@ -240,22 +240,37 @@ async function connectToMongoDB() {
       }
     });
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    const { Mutex } = require("async-mutex");
+    const mutex = new Mutex();
+
     app.put("/attendance-student", async (req, res) => {
       const attendanceInfo = req.body;
 
+      const release = await mutex.acquire();
+
       try {
         // Delete all data with the same courseName
-        await studentInfoCollection.deleteMany({
+        const deleteResult = await studentInfoCollection.deleteMany({
           courseName: attendanceInfo[0].courseName,
         });
 
+        console.log(`Deleted ${deleteResult.deletedCount} documents.`);
+
         // Insert the new data
-        const result = await studentInfoCollection.insertMany(attendanceInfo);
+        const insertResult = await studentInfoCollection.insertMany(
+          attendanceInfo
+        );
+
+        console.log(`Inserted ${insertResult.insertedCount} documents.`);
 
         res.json({ message: "Student info updated successfully" });
       } catch (error) {
         console.error("Error:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res
+          .status(500)
+          .json({ message: "Internal Server Error", error: error.message });
+      } finally {
+        release();
       }
     });
     // Post student attendance data in studentInfoCollection
